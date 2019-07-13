@@ -1,2 +1,2 @@
 This code is written on remix 
-it couldn't work on vs code or on other platform
+it may cannot works on vs code or on other platform

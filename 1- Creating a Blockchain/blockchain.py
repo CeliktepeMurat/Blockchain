@@ -1,9 +1,10 @@
-# importing libraries
+ # importing libraries
 
 import datetime
 import hashlib
 import json
 from flask import Flask, jsonify
+
 
 # -----------------------------------------------------------------------------------------------------------------------------------
 # Part 1:  Building a BLOCKCHAIN
@@ -12,11 +13,12 @@ from flask import Flask, jsonify
 class Blockchain:
     def __init__(self):
         self.chain = []
-        self.create_block(proof=1, previous_hash='0')
+        self.create_block(proof=1, previous_hash='0', hash='0')
 
-    def create_block(self, proof, previous_hash):
+    def create_block(self, proof, previous_hash, hash):
         block = {
             'index': len(self.chain) + 1,
+            'hash': hash,
             'timestamp': str(datetime.datetime.now()),
             'proof': proof,
             'previous_hash': previous_hash
@@ -36,11 +38,8 @@ class Blockchain:
                 check_proof = True
             else:
                 new_proof += 1
-        return new_proof
-    
-    def hash(self, block):
-        encoded_block = json.dumps(block, sort_keys=True).encode()
-        return hashlib.sha256(encoded_block).hexdigest()
+        return new_proof, hash_operation
+
 
     def is_chain_valid(self, chain):
         previous_block = chain[0]
@@ -75,11 +74,12 @@ blockchain = Blockchain()
 def mine_block():
     previous_block = blockchain.get_previous_block()
     previous_proof = previous_block['proof']
-    proof = blockchain.proof_of_work(previous_proof)
-    previous_hash = blockchain.hash(previous_block)
-    block = blockchain.create_block(proof, previous_hash)
+    proof, hash_value = blockchain.proof_of_work(previous_proof)
+    previous_hash = previous_block['hash']
+    block = blockchain.create_block(proof, previous_hash, hash_value)
     response = {'message': 'Congratulations, You just mined a block!',
                 'index': block['index'],
+                'hash': block['hash'],
                 'timestamp': block['timestamp'],
                 'proof': block['proof'],
                 'previous_hash': block['previous_hash']}
@@ -94,16 +94,6 @@ def get_chain():
     response = {'chain': blockchain.chain,
                 'length': len(blockchain.chain)}
     
-    return jsonify(response), 200
-
-
-@app.route('/is_valid', methods = ['GET'])
-def is_valid():
-    return_value = blockchain.is_chain_valid(blockchain.chain)
-    if return_value:
-        response = {'message': 'Blockchain is valid.'}
-    else:
-        response = {'message': 'Blockchain is not valid.'}
     return jsonify(response), 200
 
 # Running the App

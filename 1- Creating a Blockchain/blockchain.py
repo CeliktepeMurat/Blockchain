@@ -13,32 +13,40 @@ from flask import Flask, jsonify
 class Blockchain:
     def __init__(self):
         self.chain = []
-        self.create_block(proof=1, previous_hash='0', hash='0')
+        self.create_block(proof=1, previous_hash='0')
 
-    def create_block(self, proof, previous_hash, hash):
+    def create_block(self, proof, previous_hash):
         block = {
             'index': len(self.chain) + 1,
-            'hash': hash,
             'timestamp': str(datetime.datetime.now()),
             'proof': proof,
             'previous_hash': previous_hash
         }
+
+        if block['index'] == 1:
+            hash_of_genesis_block = self.get_hash(block)
+            block.update({ 'hash': hash_of_genesis_block })
+
         self.chain.append(block)
         return block
 
     def get_previous_block(self):
         return self.chain[-1]
 
-    def proof_of_work(self, previous_proof):
-        new_proof = 1
+    def proof_of_work(self, previous_nonce):
+        new_nonce = 1
         check_proof = False
         while check_proof is False:
-            hash_operation = hashlib.sha256(str(new_proof**2 - previous_proof**2).encode()).hexdigest()
+            hash_operation = hashlib.sha256(str(new_nonce**2 - previous_nonce**2).encode()).hexdigest()
             if hash_operation[:4] == '0000':
                 check_proof = True
             else:
-                new_proof += 1
-        return new_proof, hash_operation
+                new_nonce += 1
+        return new_nonce
+    
+    def get_hash(self, block):
+        encoded_block = json.dumps(block, sort_keys=True).encode()
+        return hashlib.sha256(encoded_block).hexdigest()
 
 
     def is_chain_valid(self, chain):
@@ -46,7 +54,7 @@ class Blockchain:
         block_index = 1
         while block_index < len(chain):
             block = chain[block_index]
-            if block['previous_hash'] != self.hash(previous_block):
+            if block['previous_hash'] != self.get_hash(previous_block):
                 return False
             previous_proof = previous_block['proof']
             proof = block['proof']
@@ -74,9 +82,12 @@ blockchain = Blockchain()
 def mine_block():
     previous_block = blockchain.get_previous_block()
     previous_proof = previous_block['proof']
-    proof, hash_value = blockchain.proof_of_work(previous_proof)
+    proof = blockchain.proof_of_work(previous_proof)
     previous_hash = previous_block['hash']
-    block = blockchain.create_block(proof, previous_hash, hash_value)
+    block = blockchain.create_block(proof, previous_hash)
+    block_hash = blockchain.get_hash(block)
+    block.update({'hash': block_hash })
+
     response = {'message': 'Congratulations, You just mined a block!',
                 'index': block['index'],
                 'hash': block['hash'],

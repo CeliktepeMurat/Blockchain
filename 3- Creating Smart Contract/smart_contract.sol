@@ -1,7 +1,7 @@
 // istcoin İCO
 
 // Version of compiler
-pragma solidity ^0.4.11;
+pragma solidity ^0.5.11;
 
 contract istcoin_ico{
     
@@ -25,18 +25,18 @@ contract istcoin_ico{
     }
     
     //Getting equity in istcoin on an investor
-    function equity_in_istcoin(address investor) external constant returns (uint){
+    // view means that there will be no changing inside the function
+    function equity_in_istcoin(address investor) external view returns (uint){
         return equity_istcoin[investor];
     }
     
     //Getting equity in tl on an investor
-    function equity_in_tl(address investor) external constant returns (uint){
+    function equity_in_tl(address investor) external view returns (uint){
         return equity_tl[investor];
     }
     
     // Buying istcoin
-    function buy_istcoin(address investor, uint tl_invested) external
-    can_buy_istcoins(tl_invested){
+    function buy_istcoin(address investor, uint tl_invested) external can_buy_istcoins(tl_invested){
         uint istcoin_bought = tl_invested * tl_to_istcoin;
         equity_istcoin[investor] += istcoin_bought;
         equity_tl[investor] = equity_istcoin[investor] / 1000;
